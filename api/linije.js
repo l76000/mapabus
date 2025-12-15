@@ -123,7 +123,6 @@ export default function handler(req, res) {
         <ul id="activeLines"></ul>
  
         <div class="status-bar">
-           // Osvežavanje za: <b><span id="countdown">--</span>s</b><br>
             <span id="statusText">Unesi liniju...</span>
         </div>
     </div>
