@@ -123,7 +123,7 @@ export default function handler(req, res) {
         <ul id="activeLines"></ul>
  
         <div class="status-bar">
-            Osvežavanje za: <b><span id="countdown">--</span>s</b><br>
+           // Osvežavanje za: <b><span id="countdown">--</span>s</b><br>
             <span id="statusText">Unesi liniju...</span>
         </div>
     </div>
@@ -146,11 +146,11 @@ export default function handler(req, res) {
         const routeLayer = L.layerGroup().addTo(map);
  
         let izabraneLinije = [];
-        let timerId = null;
-        let countdownId = null;
-        let refreshTime = 60;
+    //    let timerId = null;
+    //    let countdownId = null;
+   //     let refreshTime = 60;
  
-        let timeLeft = 0;
+  //      let timeLeft = 0;
  
 
         let directionColorMap = {};
@@ -435,7 +435,6 @@ export default function handler(req, res) {
                 routeLayer.clearLayers();
                 directionColorMap = {};
                 shapeToColorMapGlobal = {};
-                startTimer(0); 
                 return;
             }
  
@@ -517,7 +516,7 @@ console.log('📊 Vehicle Delays:', vehicleDelays);
                 document.getElementById('statusText').style.color = "red";
             }
  
-            startTimer(refreshTime);
+
         }
  
         function crtajVozila(vehicles, vehicleDestinations, vehicleDelays) {
@@ -754,31 +753,7 @@ console.log('📊 Vehicle Delays:', vehicleDelays);
             }
         }
 
-        function startTimer(seconds) {
-            if (timerId) clearTimeout(timerId);
-            if (countdownId) clearInterval(countdownId);
-            
-            if (seconds === 0) {
-                document.getElementById('countdown').innerText = '--';
-                return;
-            }
-            
-            timeLeft = seconds;
-            document.getElementById('countdown').innerText = timeLeft;
-            
-            countdownId = setInterval(() => {
-                timeLeft--;
-                document.getElementById('countdown').innerText = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(countdownId);
-                }
-            }, 1000);
-            
-            timerId = setTimeout(() => {
-                osveziPodatke();
-            }, seconds * 1000);
-        }
-
+       
         // ====== AUTOMATSKO UČITAVANJE LINIJE IZ URL-a ======
         let urlLineLoaded = false;
 
