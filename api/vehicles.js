@@ -11,8 +11,8 @@ export default async function handler(req, res) {
       selectedLines = linesParam.split(',').map(l => l.trim());
     }
 
-    // Učitaj stations map za detekciju undefined linija
-    const stationsMap = await loadStations();
+    // Pokušaj učitati stations map
+    const stationsMap = await loadStations(req);
 
     const timestamp = Date.now();
     const randomSalt = Math.random().toString(36).substring(2, 15);
@@ -125,54 +125,88 @@ export default async function handler(req, res) {
   }
 }
 
-// ============ NOVA FUNKCIJA ZA UČITAVANJE STANICA ============
-async function loadStations() {
+// ============ POBOLJŠANA FUNKCIJA ZA UČITAVANJE STANICA ============
+async function loadStations(req) {
   try {
-    // Uzmi base URL iz requesta (ili hardkoduj)
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : 'http://localhost:3000';
+    // Pokušaj 1: iz lokalnog procesa (API route)
+    const protocol = req.headers['x-forwarded-proto'] || 'http';
+    const host = req.headers['host'];
+    const baseUrl = `${protocol}://${host}`;
     
-    const response = await fetch(`${baseUrl}/api/stations`);
+    console.log(`Attempting to load stations from: ${baseUrl}/api/stations`);
     
-    if (!response.ok) {
-      console.error('Failed to load stations');
-      return {};
+    const response = await fetch(`${baseUrl}/api/stations`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+      }
+    });
+    
+    if (response.ok) {
+      const stations = await response.json();
+      console.log(`✓ Loaded ${Object.keys(stations).length} stations`);
+      return stations;
     }
     
-    return await response.json();
+    console.warn('Failed to load stations from API, using fallback');
+    return {};
+    
   } catch (error) {
-    console.error('Error loading stations:', error);
+    console.error('Error loading stations:', error.message);
     return {};
   }
 }
 
-// ============ NOVA FUNKCIJA ZA DETEKCIJU LINIJE ============
+// ============ POBOLJŠANA FUNKCIJA ZA DETEKCIJU LINIJE ============
 function detectRouteByDestination(stopId, stationsMap) {
+  // HARDCODED ID-evi stanica kao fallback
+  const STATION_IDS = {
+    // Linija 492
+    '492': ['29734', '29735', '28344'],  // Šumice ili Mladenovac AS
+    
+    // Linija 80
+    '80': ['21005', '22908'],  // Ikea ili Čukarička Padina
+    
+    // Linija 40A
+    '40A': ['21691', '20256']   // Banjica 2 ili Studentski Trg
+  };
+
   const normalizedId = normalizeStopId(stopId);
-  const station = stationsMap[normalizedId];
   
-  if (!station || !station.name) {
-    return null;
+  // Proveri hardcoded ID-eve prvo
+  for (const [route, ids] of Object.entries(STATION_IDS)) {
+    if (ids.includes(normalizedId) || ids.includes(stopId)) {
+      console.log(`✓ Matched by ID: ${stopId} -> Route ${route}`);
+      return route;
+    }
   }
   
-  const stationName = station.name.toLowerCase().trim();
-  
-  // Linija 492: Šumice ili Mladenovac AS
-  if (stationName.includes('šumice') || stationName.includes('sumice') || 
-      stationName.includes('mladenovac as')) {
-    return '492';
-  }
-  
-  // Linija 80: Ikea ili Čukarička Padina
-  if (stationName.includes('ikea') || stationName.includes('čukarička padina') || 
-      stationName.includes('cukaricka padina')) {
-    return '80';
-  }
-  
-  // Linija 41: Banjica 2 ili Studentski Trg
-  if (stationName.includes('banjica 2') || stationName.includes('studentski trg')) {
-    return '41';
+  // Ako postoji stations map, proveri i po nazivu
+  if (Object.keys(stationsMap).length > 0) {
+    const station = stationsMap[normalizedId];
+    
+    if (station && station.name) {
+      const stationName = station.name.toLowerCase().trim();
+      
+      // Linija 492: Šumice ili Mladenovac AS
+      if (stationName.includes('šumice') || stationName.includes('sumice') || 
+          stationName.includes('mladenovac as')) {
+        console.log(`✓ Matched by name: ${station.name} -> Route 492`);
+        return '492';
+      }
+      
+      // Linija 80: Ikea ili Čukarička Padina
+      if (stationName.includes('ikea') || stationName.includes('čukarička padina') || 
+          stationName.includes('cukaricka padina')) {
+        console.log(`✓ Matched by name: ${station.name} -> Route 80`);
+        return '80';
+      }
+      
+      // Linija 41: Banjica 2 ili Studentski Trg
+      if (stationName.includes('banjica 2') || stationName.includes('studentski trg')) {
+        console.log(`✓ Matched by name: ${station.name} -> Route 41`);
+        return '41';
+      }
+    }
   }
   
   return null;
