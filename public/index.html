@@ -17,7 +17,7 @@
 
         body {
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: linear-gradient(135deg, #E6C975 0%, #D4B35A 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -27,20 +27,32 @@
             position: relative;
         }
 
-        .snowflake {
+        /* Kontejner za logoe */
+        .floating-logos-container {
             position: fixed;
-            top: -10px;
-            color: white;
-            font-size: 1em;
-            pointer-events: none;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             z-index: 1;
-            animation: fall linear infinite;
+            pointer-events: none;
+            overflow: hidden;
         }
 
-        @keyframes fall {
-            to {
-                transform: translateY(100vh);
-            }
+        .floating-logo {
+            position: absolute;
+            width: 80px;
+            height: auto;
+            /* Povećana vidljivost (manja transparentnost) */
+            opacity: 0.3; 
+            animation: float linear infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(40px, 40px) rotate(10deg); }
+            66% { transform: translate(-40px, 60px) rotate(-5deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
         }
 
         .container {
@@ -57,21 +69,6 @@
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
             position: relative;
             display: inline-block;
-        }
-
-        .m-letter {
-            position: relative;
-            display: inline-block;
-        }
-
-        .santa-hat-img {
-            position: absolute;
-            left: -12px;
-            top: 2px;
-            width: 28px;
-            height: auto;
-            transform: rotate(-20deg);
-            z-index: 10;
         }
 
         .button-container {
@@ -143,41 +140,21 @@
         }
 
         @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.05);
-            }
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
         @media (max-width: 768px) {
-            h1 {
-                font-size: 2em;
-            }
-
-            .santa-hat-img {
-                left: -9px;
-                top: -4px;
-                width: 22px;
-            }
-
-            .btn {
-                padding: 15px 40px;
-                font-size: 1.1em;
-                min-width: 200px;
-            }
+            h1 { font-size: 2em; }
+            .btn { padding: 15px 40px; font-size: 1.1em; min-width: 200px; }
         }
     </style>
 </head>
 <body>
+    <div class="floating-logos-container" id="logoContainer"></div>
+
     <div class="container">
-        <h1>
-            <span class="m-letter">
-                <img src="https://pngimg.com/d/santa_hat_PNG90.png" alt="" class="santa-hat-img">
-                M
-            </span>apaBus
-        </h1>
+        <h1>MapaBus</h1>
         <div class="button-container">
             <a href="https://busmapa.vercel.app/api/sve" class="btn">Sva Vozila</a>
             <a href="https://busmapa.vercel.app/api/linije" class="btn">Izbor Linije</a>
@@ -192,53 +169,75 @@
     </div>
 
     <script>
-        // Kreiranje pahuljica
-        function createSnowflake() {
-            const snowflake = document.createElement('div');
-            snowflake.classList.add('snowflake');
-            snowflake.innerHTML = '❄';
-            snowflake.style.left = Math.random() * 100 + 'vw';
-            snowflake.style.animationDuration = Math.random() * 3 + 5 + 's';
-            snowflake.style.opacity = Math.random();
-            snowflake.style.fontSize = (Math.random() * 1 + 0.5) + 'em';
-            document.body.appendChild(snowflake);
+        // Lista URL-ova logoa
+        const logos = [
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Mercedes-Logo.svg/1200px-Mercedes-Logo.svg.png",
+            "https://tiryataklari.com.tr/wp-content/uploads/2023/09/bmc-logo.png",
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/MAN_Truck_%26_Bus_-_Logo.svg/1200px-MAN_Truck_%26_Bus_-_Logo.svg.png",
+            "https://vectorseek.com/wp-content/uploads/2023/11/Scania-new-Logo-Vector.svg-.png",
+            "https://akia-avesto.tj/wp-content/uploads/2021/12/cropped-logo-dark.png",
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Otokar_logo.svg/1280px-Otokar_logo.svg.png",
+            "https://i.namu.wiki/i/34eHA4PfzvhmGjnypy2JHwoxwwVW4JBkZ3Wvx4ya_WRn79e1Lj_GQ1xoQUfvVaVbMhU4_vTGGKBLiFWGDkNCsw.webp",
+            "https://upload.wikimedia.org/wikipedia/commons/0/03/Yutong_Logo.png",
+            "https://www.carlogos.org/car-logos/higer-logo.png",
+            "https://upload.wikimedia.org/wikipedia/commons/8/89/Logo_ikarbus.png",
+            "https://logos-world.net/wp-content/uploads/2021/09/Isuzu-Logo.png",
+            "https://logos-world.net/wp-content/uploads/2021/09/Iveco-Logo.png",
+            "https://autotheme.info/wp-content/uploads/2019/12/maz.png",
+            "https://images.seeklogo.com/logo-png/17/2/temsa-logo-png_seeklogo-179572.png",
+            "https://upload.wikimedia.org/wikipedia/commons/4/4f/Sor-logo.png",
+            "https://www.guleryuz.com/assets/img/guleryuz-logo.png"
+        ];
 
-            setTimeout(() => {
-                snowflake.remove();
-            }, 8000);
+        function generateFloatingLogos() {
+            const container = document.getElementById('logoContainer');
+            const logoCount = 40; // Ukupan broj logoa na ekranu
+
+            for (let i = 0; i < logoCount; i++) {
+                const img = document.createElement('img');
+                
+                // Nasumičan izbor logoa iz liste
+                const randomLogoUrl = logos[Math.floor(Math.random() * logos.length)];
+                
+                img.src = randomLogoUrl;
+                img.classList.add('floating-logo');
+                
+                // Nasumična pozicija
+                img.style.left = Math.random() * 100 + '%';
+                img.style.top = Math.random() * 100 + '%';
+                
+                // Nasumična veličina (između 60px i 100px) da bude raznovrsnije
+                const size = 60 + Math.random() * 40;
+                img.style.width = size + 'px';
+                
+                // Nasumična animacija
+                img.style.animationDuration = (20 + Math.random() * 20) + 's'; // 20-40s trajanje
+                img.style.animationDelay = (Math.random() * -40) + 's'; // Počinje odmah u različitim fazama
+
+                container.appendChild(img);
+            }
         }
 
-        // Kreiranje pahuljica svake 100ms (intenzivnije)
-        setInterval(createSnowflake, 100);
+        // Pokreni generisanje logoa odmah
+        generateFloatingLogos();
 
-        // Inicijalno kreiranje pahuljica
-        for (let i = 0; i < 50; i++) {
-            setTimeout(createSnowflake, i * 50);
-        }
+        // --- POSTOJEĆA LOGIKA ZA ADMIN PANEL ---
 
-        // Provera admin statusa i pending korisnika
         async function checkAdminStatus() {
             const token = localStorage.getItem('authToken');
-            
             if (!token) return;
 
             try {
                 const response = await fetch('/api/auth', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        action: 'verify', 
-                        token: token 
-                    })
+                    body: JSON.stringify({ action: 'verify', token: token })
                 });
 
                 const data = await response.json();
 
                 if (data.success && data.isAdmin) {
-                    // Prikaži admin dugme
                     document.getElementById('adminBtn').style.display = 'inline-block';
-                    
-                    // Proveri pending korisnike
                     checkPendingUsers(token);
                 }
             } catch (error) {
@@ -251,17 +250,13 @@
                 const response = await fetch('/api/auth', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        action: 'listUsers',
-                        token: token
-                    })
+                    body: JSON.stringify({ action: 'listUsers', token: token })
                 });
                 
                 const data = await response.json();
 
                 if (data.success && data.users) {
                     const pendingCount = data.users.filter(u => u.status === 'pending').length;
-                    
                     const adminBtn = document.getElementById('adminBtn');
                     const badge = document.getElementById('notificationBadge');
                     
@@ -279,36 +274,26 @@
             }
         }
 
-        // Globalna promenljiva za praćenje admin statusa
         let isAdmin = false;
 
-        // Proveri admin status i pokreni auto-refresh ako je admin
         async function initializeAdminFeatures() {
             const token = localStorage.getItem('authToken');
-            
             if (!token) return;
 
             try {
                 const response = await fetch('/api/auth', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        action: 'verify', 
-                        token: token 
-                    })
+                    body: JSON.stringify({ action: 'verify', token: token })
                 });
 
                 const data = await response.json();
 
                 if (data.success && data.isAdmin) {
                     isAdmin = true;
-                    // Prikaži admin dugme
                     document.getElementById('adminBtn').style.display = 'inline-block';
-                    
-                    // Prva provera pending korisnika
                     await checkPendingUsers(token);
                     
-                    // Pokreni auto-refresh svakih 30 sekundi samo za admine
                     setInterval(async () => {
                         const currentToken = localStorage.getItem('authToken');
                         if (currentToken && isAdmin) {
@@ -321,7 +306,6 @@
             }
         }
 
-        // Pokreni admin features kada se stranica učita
         window.addEventListener('load', initializeAdminFeatures);
     </script>
 </body>
