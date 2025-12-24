@@ -167,7 +167,9 @@ function detectRouteByDestination(stopId, stationsMap) {
     '80': ['21005', '22908'],  // Ikea ili Čukarička Padina
     
     // Linija 40A
-    '40A': ['21691', '20256']   // Banjica 2 ili Studentski Trg
+    '40A': ['21691', '20256'],   // Banjica 2 ili Studentski Trg
+
+    '405N': ['20146', '20147', '27656']
   };
 
   const normalizedId = normalizeStopId(stopId);
