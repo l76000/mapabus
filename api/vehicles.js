@@ -202,12 +202,6 @@ function detectRouteByDestination(stopId, stationsMap) {
         console.log(`✓ Matched by name: ${station.name} -> Route 80`);
         return '80';
       }
-      
-      // Linija 41: Banjica 2 ili Studentski Trg
-      if (stationName.includes('banjica 2') || stationName.includes('studentski trg')) {
-        console.log(`✓ Matched by name: ${station.name} -> Route 41`);
-        return '41';
-      }
     }
   }
   
