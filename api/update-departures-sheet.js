@@ -132,16 +132,13 @@ export default async function handler(req, res) {
       month: '2-digit',
       year: 'numeric'
     });
-    
-    const currentHour = belgradTime.getHours();
-    const currentMinute = belgradTime.getMinutes();
-    const currentTimeInMinutes = currentHour * 60 + currentMinute;
 
-    console.log(`Today's date: ${todayDate}, Current time: ${currentHour}:${currentMinute}`);
+    console.log(`Today's date: ${todayDate}`);
 
-    // NOVA LOGIKA: Prvo grupiši po vozilu da uzmeš samo najkasniji polazak
-    const vehicleLatestDeparture = new Map();
-    
+    // PROCESIRANJE: Uzmi SVE današnje polaske, bez vremenskog filtera
+    const routeMap = {};
+    let processedToday = 0;
+
     bazaRows.forEach(row => {
       const vozilo = row[0] || '';
       const linija = row[1] || '';
@@ -154,94 +151,29 @@ export default async function handler(req, res) {
 
       const datum = datumFull.split(' ')[0].trim();
       
-      // Samo današnja vozila
+      // Samo današnja vozila - BEZ vremenskog filtera
       if (datum !== todayDate) return;
-      
-      const polazakParts = polazak.split(':');
-      const polazakHour = parseInt(polazakParts[0]) || 0;
-      const polazakMinute = parseInt(polazakParts[1]) || 0;
-      const polazakTimeInMinutes = polazakHour * 60 + polazakMinute;
 
-      // Specijalna logika za noćne linije
-      const isNightTime = currentHour >= 0 && currentHour < 1;
-      const isLateEvening = polazakHour >= 22;
-
-      if (isNightTime && isLateEvening) {
-        // OK, noćna linija
-      } else if (polazakTimeInMinutes > currentTimeInMinutes) {
-        // Skip budući polasci
-        return;
+      // Dodaj direktno u routeMap
+      if (!routeMap[linija]) {
+        routeMap[linija] = {};
       }
-
-      // Proveri da li već postoji unos za ovo vozilo
-      const vehicleKey = `${vozilo}|${linija}|${smer}`;
       
-      if (!vehicleLatestDeparture.has(vehicleKey)) {
-        vehicleLatestDeparture.set(vehicleKey, {
-          vozilo,
-          linija,
-          polazak,
-          smer,
-          timestamp,
-          polazakTimeInMinutes
-        });
-      } else {
-        // Ako postoji, uporedi vremena i zadrži kasniji polazak
-        const existing = vehicleLatestDeparture.get(vehicleKey);
-        if (polazakTimeInMinutes > existing.polazakTimeInMinutes) {
-          vehicleLatestDeparture.set(vehicleKey, {
-            vozilo,
-            linija,
-            polazak,
-            smer,
-            timestamp,
-            polazakTimeInMinutes
-          });
-          console.log(`🔄 Replacing ${vozilo}: ${existing.polazak} → ${polazak} (later departure)`);
-        }
+      if (!routeMap[linija][smer]) {
+        routeMap[linija][smer] = [];
       }
+      
+      routeMap[linija][smer].push({
+        startTime: polazak,
+        vehicleLabel: vozilo,
+        timestamp: timestamp
+      });
+      
+      processedToday++;
     });
 
-    console.log(`Deduplicated to ${vehicleLatestDeparture.size} unique vehicles`);
-
-const routeMap = {};
-let processedToday = 0;
-
-bazaRows.forEach(row => {
-  const vozilo = row[0] || '';
-  const linija = row[1] || '';
-  const polazak = row[2] || '';
-  const smer = row[3] || '';
-  const timestamp = row[4] || '';
-  const datumFull = row[5] || '';
-
-  if (!vozilo || !linija || !polazak || !smer) return;
-
-  const datum = datumFull.split(' ')[0].trim();
-  
-  // Samo današnja vozila
-  if (datum !== todayDate) return;
-
-  // Dodaj direktno u routeMap - BEZ deduplikacije i BEZ vremenskog filtera
-  if (!routeMap[linija]) {
-    routeMap[linija] = {};
-  }
-  
-  if (!routeMap[linija][smer]) {
-    routeMap[linija][smer] = [];
-  }
-  
-  routeMap[linija][smer].push({
-    startTime: polazak,
-    vehicleLabel: vozilo,
-    timestamp: timestamp
-  });
-  
-  processedToday++;
-});
-
-console.log(`Processed ${processedToday} valid departures`);
-console.log(`Grouped into ${Object.keys(routeMap).length} routes`);
+    console.log(`Processed ${processedToday} valid departures`);
+    console.log(`Grouped into ${Object.keys(routeMap).length} routes`);
 
     if (Object.keys(routeMap).length === 0) {
       return res.status(200).json({
