@@ -704,7 +704,7 @@
                         <div class="no-data">
                             Vozilo "${vehicleNumber}" nije pronađeno u bazi. <br>
                             <small style="color: #999; margin-top: 10px; display: block;">
-                                Možda vozilo danas nije bilo u saobraćaju.
+                                Možda vozilo danas nije bilo u saobraćaju, ili ima probleme sa praćenjem.
                             </small>
                         </div>
                     `;
@@ -761,7 +761,7 @@
                     html += `
                         <div class="departure-item">
                             <span class="departure-time">${dep.vreme}</span>
-                            <span class="departure-vehicle">→ ${dep.smer}</span>
+                            <span class="departure-vehicle">ka ${dep.smer}</span>
                         </div>
                     `;
                 });
